@@ -5,23 +5,24 @@ var productos = [
     { nombre: "musculosa", precio: 25 }
 ];
 
-// Función para solicitar al usuario su nombre y mostrar un saludo de bienvenida
-function saludarUsuario() {
-    var nombre = prompt("Por favor, ingresa tu nombre:");
-    if (nombre) {
-        var saludo = document.createElement("h1");
-        saludo.textContent = "Gracias por tu compra " + nombre + " y vuelve pronto! c:";
-        document.body.appendChild(saludo);
-        return nombre;
+// Evento para iniciar la compra
+document.getElementById("iniciarCompra").addEventListener("click", function() {
+    var nombreUsuario = prompt("Por favor, ingresa tu nombre:");
+    if (nombreUsuario) {
+        localStorage.setItem("nombreUsuario", nombreUsuario);
+        var producto = buscarProducto();
+        var cantidad = solicitarCantidad(producto);
+        var totalCompra = calcularTotal(producto, cantidad);
+        alert("El total de tu compra es de: $" + totalCompra.toFixed(2));
+        alert("Gracias por tu compra, " + nombreUsuario + ", y vuelve pronto! :)");
     } else {
         alert("Por favor, ingresa un nombre.");
-        return saludarUsuario(); // en caso de nombre inválido
     }
-}
+});
 
-// Función para solicitar al usuario el producto que busca y verificar si está disponible
+// Función para buscar un producto
 function buscarProducto() {
-    var productoBuscado = prompt("Hola " + nombreUsuario + "! Por favor, ingresa el nombre del producto que buscas (Remera, Camisa o Musculosa):");
+    var productoBuscado = prompt("Hola " + localStorage.getItem("nombreUsuario") + "! Por favor, ingresa el nombre del producto que buscas (Remera, Camisa o Musculosa):");
     if (!productoBuscado) {
         alert("Por favor, ingresa un nombre de producto válido.");
         return buscarProducto(); // Llamada recursiva en caso de entrada inválida
@@ -50,10 +51,3 @@ function solicitarCantidad(producto) {
 function calcularTotal(producto, cantidad) {
     return producto.precio * cantidad;
 }
-
-// Lógica principal
-var nombreUsuario = saludarUsuario();
-var producto = buscarProducto();
-var cantidad = solicitarCantidad(producto);
-var totalCompra = calcularTotal(producto, cantidad);
-alert("El total de tu compra es de: $" + totalCompra.toFixed(2));
