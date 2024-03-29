@@ -1,51 +1,49 @@
-// Array de productos con sus precios
-var productos = [
-    { nombre: "remera", precio: 20 },
-    { nombre: "camisa", precio: 30 },
-    { nombre: "musculosa", precio: 25 }
-];
-
 // Evento para iniciar la compra
 document.getElementById("iniciarCompra").addEventListener("click", function() {
-    var nombreUsuario = prompt("Por favor, ingresa tu nombre:");
-    if (nombreUsuario) {
-        localStorage.setItem("nombreUsuario", nombreUsuario);
-        var producto = buscarProducto();
-        var cantidad = solicitarCantidad(producto);
-        var totalCompra = calcularTotal(producto, cantidad);
-        alert("El total de tu compra es de: $" + totalCompra.toFixed(2));
-        alert("Gracias por tu compra, " + nombreUsuario + ", y vuelve pronto! :)");
-    } else {
-        alert("Por favor, ingresa un nombre.");
-    }
+    document.getElementById("contenido").style.display = "block";
 });
 
-// Función para buscar un producto
-function buscarProducto() {
-    var productoBuscado = prompt("Hola " + localStorage.getItem("nombreUsuario") + "! Por favor, ingresa el nombre del producto que buscas (Remera, Camisa o Musculosa):");
-    if (!productoBuscado) {
-        alert("Por favor, ingresa un nombre de producto válido.");
-        return buscarProducto(); // Llamada recursiva en caso de entrada inválida
-    }
-    var productoEncontrado = productos.find(function(producto) {
-        return producto.nombre.toLowerCase() === productoBuscado.toLowerCase();
+// Cargar datos de productos
+axios.get('productos.json')
+    .then(function(response) {
+        var productos = response.data;
+        var productoSelect = document.getElementById("producto");
+        productos.forEach(function(producto) {
+            var option = document.createElement("option");
+            option.value = producto.nombre;
+            option.text = producto.nombre + " - $" + producto.precio;
+            productoSelect.appendChild(option);
+        });
+    })
+    .catch(function(error) {
+        console.log(error);
     });
-    if (!productoEncontrado) {
-        alert("Lo siento, el producto que buscas no está disponible en nuestra tienda.");
-        return buscarProducto(); // Llamada recursiva en caso de producto no encontrado
-    }
-    return productoEncontrado;
-}
 
-// Función para solicitar al usuario la cantidad de productos que desea comprar
-function solicitarCantidad(producto) {
-    var cantidad = parseInt(prompt("Ingresa la cantidad de " + producto.nombre + "s que deseas comprar:"));
-    if (isNaN(cantidad) || cantidad <= 0) {
-        alert("Por favor, ingresa una cantidad válida.");
-        return solicitarCantidad(producto); //en caso de cantidad inválida
-    }
-    return cantidad;
-}
+// Evento para procesar el formulario
+document.getElementById("compraForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    var nombreUsuario = document.getElementById("nombreUsuario").value;
+    var productoSeleccionado = document.getElementById("producto").value;
+    var cantidad = parseInt(document.getElementById("cantidad").value);
+
+    axios.get('productos.json')
+        .then(function(response) {
+            var productos = response.data;
+            var producto = productos.find(function(item) {
+                return item.nombre === productoSeleccionado;
+            });
+
+            if (producto) {
+                var totalCompra = calcularTotal(producto, cantidad);
+                document.getElementById("resultado").innerText = "Hola " + nombreUsuario + ", el total de tu compra es de: $" + totalCompra.toFixed(2) + ". Gracias por tu compra y vuelve pronto!";
+            } else {
+                document.getElementById("resultado").innerText = "Lo siento, el producto seleccionado no está disponible en nuestra tienda.";
+            }
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
+});
 
 // Función para calcular el total de la compra
 function calcularTotal(producto, cantidad) {
