@@ -6,12 +6,21 @@ document.getElementById("iniciarCompra").addEventListener("click", function() {
 // Cargar datos de productos
 axios.get('productos.json')
     .then(function(response) {
-        var productos = response.data;
-        var productoSelect = document.getElementById("producto");
+        const productos = response.data;
+        const productoSelect = document.getElementById("producto");
         productos.forEach(function(producto) {
-            var option = document.createElement("option");
+            const option = document.createElement("option");
             option.value = producto.nombre;
             option.text = producto.nombre + " - $" + producto.precio;
+            productoSelect.appendChild(option);
+        });
+
+        // Cargar productos seleccionados del localStorage al iniciar la página
+        const productosSeleccionados = JSON.parse(localStorage.getItem("productosSeleccionados")) || [];
+        productosSeleccionados.forEach(productoSeleccionado => {
+            const option = document.createElement("option");
+            option.value = productoSeleccionado.nombre;
+            option.text = productoSeleccionado.nombre;
             productoSelect.appendChild(option);
         });
     })
@@ -22,22 +31,50 @@ axios.get('productos.json')
 // Evento para procesar el formulario
 document.getElementById("compraForm").addEventListener("submit", function(event) {
     event.preventDefault();
-    var nombreUsuario = document.getElementById("nombreUsuario").value;
-    var productoSeleccionado = document.getElementById("producto").value;
-    var cantidad = parseInt(document.getElementById("cantidad").value);
+    const nombreUsuario = document.getElementById("nombreUsuario").value;
+    const productoSeleccionado = document.getElementById("producto").value;
+    const cantidad = parseInt(document.getElementById("cantidad").value);
+
+    // Obtener o inicializar los productos seleccionados desde el localStorage
+    let productosSeleccionados = JSON.parse(localStorage.getItem("productosSeleccionados")) || [];
 
     axios.get('productos.json')
         .then(function(response) {
-            var productos = response.data;
-            var producto = productos.find(function(item) {
-                return item.nombre === productoSeleccionado;
-            });
-
+            const productos = response.data;
+            const producto = productos.find(item => item.nombre === productoSeleccionado);
             if (producto) {
-                var totalCompra = calcularTotal(producto, cantidad);
-                document.getElementById("resultado").innerText = "Hola " + nombreUsuario + ", el total de tu compra es de: $" + totalCompra.toFixed(2) + ". Gracias por tu compra y vuelve pronto!";
+                // Agregar el producto seleccionado al array
+                productosSeleccionados.push({ nombre: producto.nombre, cantidad: cantidad });
+                // Almacenar los productos seleccionados en el localStorage
+                localStorage.setItem("productosSeleccionados", JSON.stringify(productosSeleccionados));
+
+                let totalCompra = 0;
+                productosSeleccionados.forEach(productoSeleccionado => {
+                    totalCompra += calcularTotal(productos.find(item => item.nombre === productoSeleccionado.nombre), productoSeleccionado.cantidad);
+                });
+
+                if (totalCompra > 0) {
+                    // Utilizar SweetAlert para mostrar el mensaje de compra exitosa
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Compra exitosa!',
+                        text: `Hola ${nombreUsuario}, el total de tu compra es de: $${totalCompra.toFixed(2)}. Gracias por tu compra y vuelve pronto!`
+                    });
+                } else {
+                    // Utilizar SweetAlert para mostrar un mensaje de error
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Lo siento, los productos seleccionados no están disponibles en nuestra tienda.'
+                    });
+                }
             } else {
-                document.getElementById("resultado").innerText = "Lo siento, el producto seleccionado no está disponible en nuestra tienda.";
+                // Utilizar SweetAlert para mostrar un mensaje de error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Lo siento, el producto seleccionado no está disponible en nuestra tienda.'
+                });
             }
         })
         .catch(function(error) {
